@@ -44,13 +44,14 @@ namespace EDDiscovery.UserControls
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dataViewScrollerPanel1 = new ExtendedControls.DataViewScrollerPanel();
             this.vScrollBarCustom1 = new ExtendedControls.VScrollBarCustom();
             this.dataGridViewJournal = new System.Windows.Forms.DataGridView();
             this.ColumnTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Event = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnText = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnEvent = new ExtendedControls.EventDGVColumn();
+            this.ColumnDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnInformation = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.historyContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.mapGotoStartoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewOnEDSMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -124,13 +125,14 @@ namespace EDDiscovery.UserControls
             this.dataGridViewJournal.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewJournal.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnTime,
-            this.Event,
-            this.ColumnType,
-            this.ColumnText});
+            this.ColumnEvent,
+            this.ColumnDescription,
+            this.ColumnInformation});
             this.dataGridViewJournal.ContextMenuStrip = this.historyContextMenu;
             this.dataGridViewJournal.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewJournal.Location = new System.Drawing.Point(0, 0);
             this.dataGridViewJournal.Name = "dataGridViewJournal";
+            this.dataGridViewJournal.ReadOnly = true;
             this.dataGridViewJournal.ScrollBars = System.Windows.Forms.ScrollBars.None;
             this.dataGridViewJournal.Size = new System.Drawing.Size(784, 684);
             this.dataGridViewJournal.TabIndex = 0;
@@ -145,29 +147,30 @@ namespace EDDiscovery.UserControls
             this.ColumnTime.Name = "ColumnTime";
             this.ColumnTime.ReadOnly = true;
             // 
-            // Event
+            // ColumnEvent
             // 
-            this.Event.FillWeight = 50F;
-            this.Event.HeaderText = "Event";
-            this.Event.MinimumWidth = 50;
-            this.Event.Name = "Event";
-            this.Event.ReadOnly = true;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.Padding = new System.Windows.Forms.Padding(2);
+            this.ColumnEvent.DefaultCellStyle = dataGridViewCellStyle1;
+            this.ColumnEvent.FillWeight = 50F;
+            this.ColumnEvent.HeaderText = "Event";
+            this.ColumnEvent.MinimumWidth = 50;
+            this.ColumnEvent.Name = "ColumnEvent";
+            this.ColumnEvent.ShowMapColourForFSD = false;
             // 
-            // ColumnType
+            // ColumnDescription
             // 
-            this.ColumnType.FillWeight = 125F;
-            this.ColumnType.HeaderText = "Description";
-            this.ColumnType.MinimumWidth = 50;
-            this.ColumnType.Name = "ColumnType";
-            this.ColumnType.ReadOnly = true;
+            this.ColumnDescription.FillWeight = 125F;
+            this.ColumnDescription.HeaderText = "Description";
+            this.ColumnDescription.MinimumWidth = 50;
+            this.ColumnDescription.Name = "ColumnDescription";
             // 
-            // ColumnText
+            // ColumnInformation
             // 
-            this.ColumnText.FillWeight = 300F;
-            this.ColumnText.HeaderText = "Information";
-            this.ColumnText.MinimumWidth = 50;
-            this.ColumnText.Name = "ColumnText";
-            this.ColumnText.ReadOnly = true;
+            this.ColumnInformation.FillWeight = 300F;
+            this.ColumnInformation.HeaderText = "Information";
+            this.ColumnInformation.MinimumWidth = 50;
+            this.ColumnInformation.Name = "ColumnInformation";
             // 
             // historyContextMenu
             // 
@@ -396,9 +399,9 @@ namespace EDDiscovery.UserControls
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemStartStop;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnTime;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Event;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnText;
+        private ExtendedControls.EventDGVColumn ColumnEvent;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnDescription;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnInformation;
         private ExtendedControls.DrawnPanel drawnPanelPopOut;
         private System.Windows.Forms.Panel panelJournalIcon;
         private ExtendedControls.ButtonExt buttonField;

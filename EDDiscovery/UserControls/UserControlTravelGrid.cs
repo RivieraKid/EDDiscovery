@@ -28,6 +28,7 @@ using EDDiscovery2.DB;
 using EDDiscovery.EliteDangerous;
 using EDDiscovery2.EDSM;
 using EDDiscovery2;
+using System.Diagnostics;
 
 namespace EDDiscovery.UserControls
 {
@@ -35,11 +36,11 @@ namespace EDDiscovery.UserControls
     {
         public int currentGridRow { get; set; } = -1;
         public DataGridViewRow GetCurrentRow { get { return currentGridRow >= 0 ? dataGridViewTravel.Rows[currentGridRow] : null; } }
-        public HistoryEntry GetCurrentHistoryEntry { get { return currentGridRow >= 0 ? dataGridViewTravel.Rows[currentGridRow].Cells[TravelHistoryColumns.HistoryTag].Tag as HistoryEntry : null; } }
+        public HistoryEntry GetCurrentHistoryEntry { get { return currentGridRow >= 0 ? dataGridViewTravel.Rows[currentGridRow].Cells[ColumnEvent.Index].Value as HistoryEntry : null; } }
 
-        public HistoryEntry GetHistoryEntry(int r) { return dataGridViewTravel.Rows[r].Cells[TravelHistoryColumns.HistoryTag].Tag as HistoryEntry; }
+        public HistoryEntry GetHistoryEntry(int r) { return dataGridViewTravel.Rows[r].Cells[ColumnEvent.Index].Value as HistoryEntry; }
 
-        public static HistoryEntry GetHistoryEntry( DataGridViewRow rw) { return rw.Cells[TravelHistoryColumns.HistoryTag].Tag as HistoryEntry; }
+        public HistoryEntry GetHistoryEntry(DataGridViewRow rw) { return rw.Cells[ColumnEvent.Index].Value as HistoryEntry; }
 
         public DataGridViewRow GetRow(int r) { return dataGridViewTravel.Rows[r]; }
 
@@ -66,17 +67,6 @@ namespace EDDiscovery.UserControls
 
         #region Init
 
-        private class TravelHistoryColumns
-        {
-            public const int Time = 0;
-            public const int Icon = 1;
-            public const int Description = 2;
-            public const int Information = 3;
-            public const int Note = 4;
-
-            public const int HistoryTag = Description;      // where the tags are used
-        }
-
         private const int DefaultRowHeight = 26;
 
         private static EDDiscoveryForm discoveryform;
@@ -97,6 +87,8 @@ namespace EDDiscovery.UserControls
         {
             InitializeComponent();
             Name = "History";
+            // If one creates a custom DGVColumn using DateTime, it can't be used by VS designer. This is the next best option.
+            ColumnTime.ValueType = typeof(DateTime);
         }
 
         public override void Init( EDDiscoveryForm ed, int vn) //0=primary, 1 = first windowed version, etc
@@ -186,7 +178,7 @@ namespace EDDiscovery.UserControls
             else if (dataGridViewTravel.Rows.GetRowCount(DataGridViewElementStates.Visible) > 0)
             {
                 rowno = dataGridViewTravel.Rows.GetFirstRow(DataGridViewElementStates.Visible);
-                dataGridViewTravel.CurrentCell = dataGridViewTravel.Rows[rowno].Cells[TravelHistoryColumns.Description];
+                dataGridViewTravel.CurrentCell = dataGridViewTravel.Rows[rowno].Cells[ColumnDescription.Index];
             }
             else
                 rowno = -1;
@@ -213,7 +205,7 @@ namespace EDDiscovery.UserControls
         {
             //string debugt = item.Journalid + "  " + item.System.id_edsm + " " + item.System.GetHashCode() + " "; // add on for debug purposes to a field below
 
-            object[] rowobj = { EDDiscoveryForm.EDDConfig.DisplayUTC ? item.EventTimeUTC : item.EventTimeLocal, "", item.EventSummary, item.EventDescription, (item.snc != null) ? item.snc.Note : "" };
+            object[] rowobj = { EDDiscoveryForm.EDDConfig.DisplayUTC ? item.EventTimeUTC : item.EventTimeLocal, item, item.EventSummary, item.EventDescription, (item.snc != null) ? item.snc.Note : "" };
 
             int rownr;
             if (insert)
@@ -227,16 +219,13 @@ namespace EDDiscovery.UserControls
                 rownr = dataGridViewTravel.Rows.Count - 1;
             }
 
-            dataGridViewTravel.Rows[rownr].Cells[TravelHistoryColumns.HistoryTag].Tag = item;
-
+            //dataGridViewTravel.Rows[rownr].HeaderCell.Value = item.Indexno.ToString();
+            //dataGridViewTravel.Rows[rownr].HeaderCell.Value = (discoveryform.settings.OrderRowsInverted ? item.Indexno.ToString() : (current_historylist.Count - item.Indexno + 1).ToString());
             dataGridViewTravel.Rows[rownr].DefaultCellStyle.ForeColor = (item.System.HasCoordinate || item.EntryType != JournalTypeEnum.FSDJump) ? discoveryform.theme.VisitedSystemColor : discoveryform.theme.NonVisitedSystemColor;
 
             string tip = item.EventSummary + Environment.NewLine + item.EventDescription + Environment.NewLine + item.EventDetailedInfo;
-            dataGridViewTravel.Rows[rownr].Cells[0].ToolTipText = tip;
-            dataGridViewTravel.Rows[rownr].Cells[1].ToolTipText = tip;
-            dataGridViewTravel.Rows[rownr].Cells[2].ToolTipText = tip;
-            dataGridViewTravel.Rows[rownr].Cells[3].ToolTipText = tip;
-            dataGridViewTravel.Rows[rownr].Cells[4].ToolTipText = tip;
+            foreach (DataGridViewCell cell in dataGridViewTravel.Rows[rownr].Cells)
+                cell.ToolTipText = tip;
 
 #if DEBUGVOICE
             List<Actions.ActionFileList.MatchingSets> ale = discoveryform.actionfiles.GetMatchingConditions(item.journalEntry.EventTypeStr);
@@ -263,7 +252,7 @@ namespace EDDiscovery.UserControls
 
         Tuple<long, int> CurrentGridPosByJID()
         {
-            long jid = (dataGridViewTravel.CurrentCell != null) ? ((HistoryEntry)(dataGridViewTravel.Rows[dataGridViewTravel.CurrentCell.RowIndex].Cells[TravelHistoryColumns.HistoryTag].Tag)).Journalid : 0;
+            long jid = (dataGridViewTravel.CurrentCell != null) ? ((HistoryEntry)(dataGridViewTravel.Rows[dataGridViewTravel.CurrentCell.RowIndex].Cells[ColumnEvent.Index].Value)).Journalid : 0;
             int cellno = (dataGridViewTravel.CurrentCell != null) ? dataGridViewTravel.CurrentCell.ColumnIndex : 0;
             return new Tuple<long, int>(jid, cellno);
         }
@@ -273,7 +262,7 @@ namespace EDDiscovery.UserControls
             int rowno = FindGridPosByJID(jid);
             if (rowno >= 0)
             {
-                dataGridViewTravel.CurrentCell = dataGridViewTravel.Rows[rowno].Cells[TravelHistoryColumns.Information];
+                dataGridViewTravel.CurrentCell = dataGridViewTravel.Rows[rowno].Cells[ColumnInformation.Index];
                 dataGridViewTravel.Rows[rowno].Selected = true;
             }
         }
@@ -284,7 +273,7 @@ namespace EDDiscovery.UserControls
             {
                 foreach (DataGridViewRow r in dataGridViewTravel.Rows)
                 {
-                    if (r.Visible && ((HistoryEntry)(r.Cells[TravelHistoryColumns.HistoryTag].Tag)).Journalid == jid)
+                    if (r.Visible && ((HistoryEntry)(r.Cells[ColumnEvent.Index].Value)).Journalid == jid)
                     {
                         return r.Index;
                     }
@@ -309,7 +298,7 @@ namespace EDDiscovery.UserControls
 
         private void dataGridViewTravel_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-            if (e.ColumnIndex != TravelHistoryColumns.Icon)
+            if (e.ColumnIndex != ColumnEvent.Index)
             {
                 DataGridViewSorter.DataGridSort(dataGridViewTravel, e.ColumnIndex);
                 if (OnResort != null)
@@ -321,7 +310,7 @@ namespace EDDiscovery.UserControls
         {
             currentGridRow = e.RowIndex;
             if (OnChangedSelection != null)
-                OnChangedSelection(e.RowIndex, e.ColumnIndex, false, e.ColumnIndex == TravelHistoryColumns.Note);
+                OnChangedSelection(e.RowIndex, e.ColumnIndex, false, e.ColumnIndex == ColumnNote.Index);
         }
 
 
@@ -334,7 +323,7 @@ namespace EDDiscovery.UserControls
                 cursorkeydown = false;
                 currentGridRow = e.RowIndex;
                 if (OnChangedSelection != null)
-                    OnChangedSelection(e.RowIndex, e.ColumnIndex, false, e.ColumnIndex == TravelHistoryColumns.Note);
+                    OnChangedSelection(e.RowIndex, e.ColumnIndex, false, e.ColumnIndex == ColumnNote.Index);
             }
 
         }
@@ -349,20 +338,20 @@ namespace EDDiscovery.UserControls
         public void UpdateCurrentNote(string s)
         {
             if (currentGridRow >= 0)
-                dataGridViewTravel.Rows[currentGridRow].Cells[TravelHistoryColumns.Note].Value = s;
+                dataGridViewTravel.Rows[currentGridRow].Cells[ColumnNote.Index].Value = s;
         }
 
         public void UpdateNoteJID(long r, string s)
         {
             int row = FindGridPosByJID(r);
             if ( row >= 0 )
-                dataGridViewTravel.Rows[row].Cells[TravelHistoryColumns.Note].Value = s;
+                dataGridViewTravel.Rows[row].Cells[ColumnNote.Index].Value = s;
         }
         
         public void UpdateCurrentNoteTag(Object o)
         {
             if (currentGridRow >= 0)
-                dataGridViewTravel.Rows[currentGridRow].Cells[TravelHistoryColumns.Note].Tag = o;
+                dataGridViewTravel.Rows[currentGridRow].Cells[ColumnEvent.Index].Value = o;
         }
 
         private void textBoxFilter_TextChanged(object sender, EventArgs e)
@@ -379,67 +368,27 @@ namespace EDDiscovery.UserControls
 
         private void dataGridViewTravel_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
         {
-            DataGridView grid = sender as DataGridView;
-            PaintEventColumn(grid, e,
-                            discoveryform.history.Count, (HistoryEntry)dataGridViewTravel.Rows[e.RowIndex].Cells[TravelHistoryColumns.HistoryTag].Tag,
-                            grid.RowHeadersWidth + grid.Columns[0].Width, grid.Columns[1].Width, true);
-        }
+            DataGridView grid = (DataGridView)sender;
+            HistoryEntry he = (HistoryEntry)grid.Rows[e.RowIndex].Cells[ColumnEvent.Index].Value;
 
-        public static void PaintEventColumn(DataGridView grid, DataGridViewRowPostPaintEventArgs e,
-                                             int totalentries, HistoryEntry he,
-                                             int hpos, int colwidth, bool showfsdmapcolour)
-        {
+            Debug.Assert(grid != null);
+            Debug.Assert(he != null);
+
             string rowIdx;
-
             if (discoveryform.settings.OrderRowsInverted)
                 rowIdx = he.Indexno.ToString();            // oldest has the highest index
             else
-                rowIdx = (totalentries - he.Indexno + 1).ToString();
+                rowIdx = (discoveryform.history.Count - he.Indexno + 1).ToString();
 
             var centerFormat = new StringFormat()
             {
-                // right alignment might actually make more sense for numbers
-                Alignment = StringAlignment.Center,
+                Alignment = StringAlignment.Far,
                 LineAlignment = StringAlignment.Center
             };
-
-            var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
+            var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth - 2, e.RowBounds.Height);
 
             using (Brush br = new SolidBrush(grid.RowHeadersDefaultCellStyle.ForeColor))
                 e.Graphics.DrawString(rowIdx, grid.RowHeadersDefaultCellStyle.Font, br, headerBounds, centerFormat);
-
-            int noicons = (he.IsFSDJump && showfsdmapcolour) ? 2 : 1;
-            if (he.StartMarker || he.StopMarker)
-                noicons++;
-
-            int padding = 4;
-            int size = 24;
-
-            if (size * noicons > (colwidth - 2))
-                size = (colwidth - 2) / noicons;
-
-            int hstart = (hpos + colwidth / 2) - size / 2 * noicons - padding / 2 * (noicons - 1);
-
-            int top = (e.RowBounds.Top + e.RowBounds.Bottom) / 2 - size / 2;
-
-            e.Graphics.DrawImage(he.GetIcon, new Rectangle(hstart, top, size, size));
-            hstart += size + padding;
-
-            if (he.IsFSDJump && showfsdmapcolour)
-            {
-                using (Brush b = new SolidBrush(Color.FromArgb(he.MapColour)))
-                {
-                    e.Graphics.FillEllipse(b, new Rectangle(hstart + 2, top + 2, size - 6, size - 6));
-                }
-
-                hstart += size + padding;
-            }
-
-            if (he.StartMarker)
-                e.Graphics.DrawImage(EDDiscovery.Properties.Resources.startflag, new Rectangle(hstart, top, size, size));
-            else if (he.StopMarker)
-                e.Graphics.DrawImage(EDDiscovery.Properties.Resources.stopflag, new Rectangle(hstart, top, size, size));
-
         }
 
         #region Clicks
@@ -473,12 +422,12 @@ namespace EDDiscovery.UserControls
                     if (e.Button == MouseButtons.Right)         // right click on travel map, get in before the context menu
                     {
                         rightclickrow = hti.RowIndex;
-                        rightclicksystem = (HistoryEntry)dataGridViewTravel.Rows[hti.RowIndex].Cells[TravelHistoryColumns.HistoryTag].Tag;
+                        rightclicksystem = (HistoryEntry)dataGridViewTravel.Rows[hti.RowIndex].Cells[ColumnEvent.Index].Value;
                     }
                     if (e.Button == MouseButtons.Left)         // right click on travel map, get in before the context menu
                     {
                         leftclickrow = hti.RowIndex;
-                        leftclicksystem = (HistoryEntry)dataGridViewTravel.Rows[hti.RowIndex].Cells[TravelHistoryColumns.HistoryTag].Tag;
+                        leftclicksystem = (HistoryEntry)dataGridViewTravel.Rows[hti.RowIndex].Cells[ColumnEvent.Index].Value;
                     }
                 }
             }
@@ -514,9 +463,9 @@ namespace EDDiscovery.UserControls
                 {
                     using (Graphics g = Parent.CreateGraphics())
                     {
-                        int desch = (int)(g.MeasureString((string)dataGridViewTravel.Rows[leftclickrow].Cells[TravelHistoryColumns.Description].Value, dataGridViewTravel.Font, dataGridViewTravel.Columns[TravelHistoryColumns.Description].Width - 4).Height + 2);
-                        int infoh = (int)(g.MeasureString(infotext, dataGridViewTravel.Font, dataGridViewTravel.Columns[TravelHistoryColumns.Information].Width - 4).Height + 2);
-                        int noteh = (int)(g.MeasureString((string)dataGridViewTravel.Rows[leftclickrow].Cells[TravelHistoryColumns.Note].Value, dataGridViewTravel.Font, dataGridViewTravel.Columns[TravelHistoryColumns.Note].Width - 4).Height + 2);
+                        int desch = (int)(g.MeasureString((string)dataGridViewTravel.Rows[leftclickrow].Cells[ColumnDescription.Index].Value, dataGridViewTravel.Font, dataGridViewTravel.Columns[ColumnDescription.Index].Width - 4).Height + 2);
+                        int infoh = (int)(g.MeasureString(infotext, dataGridViewTravel.Font, dataGridViewTravel.Columns[ColumnInformation.Index].Width - 4).Height + 2);
+                        int noteh = (int)(g.MeasureString((string)dataGridViewTravel.Rows[leftclickrow].Cells[ColumnNote.Index].Value, dataGridViewTravel.Font, dataGridViewTravel.Columns[ColumnNote.Index].Width - 4).Height + 2);
 
                         h = Math.Max(desch, h);
                         h = Math.Max(infoh, h);
@@ -528,13 +477,13 @@ namespace EDDiscovery.UserControls
                 toexpand = (h > DefaultRowHeight);      // now we have our h, is it bigger? If so, we need to go into wrap mode
 
                 dataGridViewTravel.Rows[leftclickrow].Height = h;
-                dataGridViewTravel.Rows[leftclickrow].Cells[TravelHistoryColumns.Information].Value = infotext;
+                dataGridViewTravel.Rows[leftclickrow].Cells[ColumnInformation.Index].Value = infotext;
 
                 DataGridViewTriState ti = (toexpand) ? DataGridViewTriState.True : DataGridViewTriState.False;
 
-                dataGridViewTravel.Rows[leftclickrow].Cells[TravelHistoryColumns.Information].Style.WrapMode = ti;
-                dataGridViewTravel.Rows[leftclickrow].Cells[TravelHistoryColumns.Description].Style.WrapMode = ti;
-                dataGridViewTravel.Rows[leftclickrow].Cells[TravelHistoryColumns.Note].Style.WrapMode = ti;
+                dataGridViewTravel.Rows[leftclickrow].Cells[ColumnInformation.Index].Style.WrapMode = ti;
+                dataGridViewTravel.Rows[leftclickrow].Cells[ColumnDescription.Index].Style.WrapMode = ti;
+                dataGridViewTravel.Rows[leftclickrow].Cells[ColumnNote.Index].Style.WrapMode = ti;
             }
         }
 
@@ -575,7 +524,7 @@ namespace EDDiscovery.UserControls
             ColorDialog mapColorDialog = new ColorDialog();
             mapColorDialog.AllowFullOpen = true;
             mapColorDialog.FullOpen = true;
-            HistoryEntry sp2 = (HistoryEntry)selectedRows.First().Cells[TravelHistoryColumns.HistoryTag].Tag;
+            HistoryEntry sp2 = (HistoryEntry)selectedRows.First().Cells[ColumnEvent.Index].Value;
             mapColorDialog.Color = Color.FromArgb(sp2.MapColour);
 
             if (mapColorDialog.ShowDialog(this) == DialogResult.OK)
@@ -584,7 +533,7 @@ namespace EDDiscovery.UserControls
 
                 foreach (DataGridViewRow r in selectedRows)
                 {
-                    HistoryEntry sp = (HistoryEntry)r.Cells[TravelHistoryColumns.HistoryTag].Tag;
+                    HistoryEntry sp = (HistoryEntry)r.Cells[ColumnEvent.Index].Value;
                     System.Diagnostics.Debug.Assert(sp != null);
                     sp.UpdateMapColour(mapColorDialog.Color.ToArgb());
                 }
@@ -604,7 +553,7 @@ namespace EDDiscovery.UserControls
 
             foreach (DataGridViewRow r in selectedRows)
             {
-                HistoryEntry sp = (HistoryEntry)r.Cells[TravelHistoryColumns.HistoryTag].Tag;
+                HistoryEntry sp = (HistoryEntry)r.Cells[ColumnEvent.Index].Value;
                 System.Diagnostics.Debug.Assert(sp != null);
                 sp.UpdateCommanderID(-1);
             }
@@ -636,7 +585,7 @@ namespace EDDiscovery.UserControls
             this.Cursor = Cursors.WaitCursor;
             foreach (DataGridViewRow r in selectedRows)
             {
-                HistoryEntry sp = (HistoryEntry)r.Cells[TravelHistoryColumns.HistoryTag].Tag;
+                HistoryEntry sp = (HistoryEntry)r.Cells[ColumnEvent.Index].Value;
                 System.Diagnostics.Debug.Assert(sp != null);
                 listsyspos.Add(sp);
             }
@@ -698,7 +647,7 @@ namespace EDDiscovery.UserControls
             string lastname = "";
             foreach (DataGridViewRow r in selectedRows)
             {
-                HistoryEntry sp = (HistoryEntry)r.Cells[TravelHistoryColumns.HistoryTag].Tag;
+                HistoryEntry sp = (HistoryEntry)r.Cells[ColumnEvent.Index].Value;
 
                 if (!sp.System.name.Equals(lastname))
                 {

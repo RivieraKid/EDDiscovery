@@ -50,7 +50,7 @@ namespace EDDiscovery
             public DataGridViewCustomSorter(DataGridView dgv)
             {
                 myDataGridView = dgv;
-                mySortTypeCode = Type.GetTypeCode(Type.GetType("System.String"));
+                mySortTypeCode = TypeCode.String;
                 ColumnIndex = 0;
                 OrderOfSort = SortOrder.None;
             }
@@ -134,7 +134,8 @@ namespace EDDiscovery
                     {
                         mySortTypeCode = TypeCode.String;
 
-                        if (ColumnIndex == 0)           // 0 is date time on all views which use this.. bodge
+                        // ColumnnIndex 0 should be DateTime on all views which use this, but others may want it, too.
+                        if (myDataGridView.Columns[ColumnIndex].ValueType == typeof(DateTime) || ColumnIndex == 0)
                             mySortTypeCode = TypeCode.DateTime;
                     }
                     catch

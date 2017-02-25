@@ -51,12 +51,7 @@ namespace ExtendedControls
         public AutoCompleteTextBox.PerformAutoComplete AutoCompleteGenerator { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AutoCompleteDGVColumn"/> class to the default state.
-        /// </summary>
-        public AutoCompleteDGVColumn() : base(new CellDisplayControl()) { }
-
-        /// <summary>
-        /// Gets or sets the template used to create new cells.
+        /// Gets or sets the template used to create new cells. Required for designer support.
         /// </summary>
         /// <value>A <see cref="DataGridViewCell"/> that all other cells in the column are modeled after. The default is <c>null</c>.</value>
         /// <exception cref="InvalidCastException">raised when <paramref name="CellTemplate"/> does not inherit from <see cref="CellDisplayControl"/>.</exception>
@@ -73,7 +68,12 @@ namespace ExtendedControls
         }
 
         /// <summary>
-        /// Creates an exact copy of this <see cref="AutoCompleteDGVColumn"/>.
+        /// Initializes a new instance of the <see cref="AutoCompleteDGVColumn"/> class to the default state.
+        /// </summary>
+        public AutoCompleteDGVColumn() : base(new CellDisplayControl()) { }
+
+        /// <summary>
+        /// Creates an exact copy of this <see cref="AutoCompleteDGVColumn"/>. Required for designer support.
         /// </summary>
         /// <returns>An <see cref="object"/> that represents the cloned <see cref="AutoCompleteDGVColumn"/>.</returns>
         public override object Clone()
